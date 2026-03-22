@@ -1,9 +1,9 @@
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use axum::{
     Router,
-    http::{Method, StatusCode},
+    http::{HeaderValue, Method, StatusCode},
     routing::get,
 };
 use tokio::net::TcpListener;
@@ -15,9 +15,34 @@ use tower_http::{
 };
 use tracing::info;
 
-use crate::{config::config_model::DotEnvyConfig, infrastructure::axum_http::default_routers};
+use crate::{
+    config::{config_loader::get_stage, config_model::DotEnvyConfig, stage::Stage},
+    infrastructure::axum_http::default_routers,
+};
 
 pub async fn start(config: Arc<DotEnvyConfig>) -> Result<()> {
+    let cors_layer = match get_stage() {
+        Stage::Local | Stage::Development => CorsLayer::new().allow_origin(Any),
+        Stage::Production => {
+            let origins = config
+                .server
+                .allow_origins
+                .split(',')
+                .map(str::trim)
+                .filter(|origin| !origin.is_empty())
+                .map(HeaderValue::from_str)
+                .collect::<std::result::Result<Vec<_>, _>>()
+                .map_err(|err| anyhow!("Invalid SERVER_ALLOW_ORIGINS value: {err}"))?;
+
+            if origins.is_empty() {
+                return Err(anyhow!(
+                    "SERVER_ALLOW_ORIGINS must contain at least one origin in production"
+                ));
+            }
+
+            CorsLayer::new().allow_origin(origins)
+        }
+    };
     let app = Router::new()
         .fallback(default_routers::not_found)
         .route("/health-check", get(default_routers::health_check))
@@ -29,15 +54,14 @@ pub async fn start(config: Arc<DotEnvyConfig>) -> Result<()> {
             (config.server.body_limit * 1024 * 1024).try_into()?,
         ))
         .layer(
-            CorsLayer::new()
+            cors_layer
                 .allow_methods([
                     Method::GET,
                     Method::POST,
                     Method::PUT,
                     Method::PATCH,
                     Method::DELETE,
-                ])
-                .allow_origin(Any),
+                ]),
         )
         .layer(TraceLayer::new_for_http());
 
