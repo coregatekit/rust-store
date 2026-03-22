@@ -9,7 +9,7 @@ STAGE=Local
 
 SERVER_PORT=8080
 SERVER_BODY_LIMIT=10 #MB
-SERVER_TIMEOUT=30 #Seconds
+SERVER_TIME_OUT=30 #Seconds
 
 DATABASE_URL=postgres://<username>:<password>@<host>:<port>/<database>
 ```
