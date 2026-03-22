@@ -12,7 +12,7 @@ pub fn load() -> Result<DotEnvyConfig> {
         body_limit: std::env::var("SERVER_BODY_LIMIT")
             .expect("SERVER_BODY_LIMIT is invalid")
             .parse()?,
-        time_out: std::env::var("SERVER_TIMEOUT")
+        time_out: std::env::var("SERVER_TIME_OUT")
             .expect("SERVER_TIME_OUT is invalid")
             .parse()?,
     };
