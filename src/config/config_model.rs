@@ -9,6 +9,7 @@ pub struct Server {
     pub port: u16,
     pub body_limit: u64,
     pub time_out: u64,
+    pub allow_origins: String,
 }
 
 #[derive(Debug, Clone)]

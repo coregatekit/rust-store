@@ -15,6 +15,7 @@ pub fn load() -> Result<DotEnvyConfig> {
         time_out: std::env::var("SERVER_TIME_OUT")
             .expect("SERVER_TIME_OUT is invalid")
             .parse()?,
+        allow_origins: std::env::var("SERVER_ALLOW_ORIGINS").unwrap_or("*".to_string()),
     };
 
     let database = Database {
