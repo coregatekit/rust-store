@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use rust_store::{config::config_loader, infrastructure::axum_http::http_serve::start};
+use rust_store::{config::config_loader, infrastructure::{axum_http::http_serve::start, postgres::connection::establish_connection}};
 use tracing::{error, info};
 
 #[tokio::main]
@@ -16,6 +16,16 @@ async fn main() {
     };
 
     info!("Environment variables loaded successfully: {:?}", dotenvy_env);
+
+    let postgres_pool = match establish_connection(&dotenvy_env.database.url) {
+        Ok(pool) => pool,
+        Err(err) => {
+            error!("Failed to establish database connection: {err}");
+            std::process::exit(1);
+        },
+    };
+
+    info!("Database connection established successfully");
 
     start(Arc::new(dotenvy_env)).await.expect("Failed to start server");
 }
