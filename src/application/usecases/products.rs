@@ -1,7 +1,11 @@
+use anyhow::{Ok, Result};
 use std::sync::Arc;
 
 use crate::{
-    domain::{entities::products::ProductEntity, repositories::products::ProductsRepository},
+    domain::{
+        entities::products::{ProductCursorPage, ProductEntity},
+        repositories::products::ProductsRepository,
+    },
     infrastructure::postgres::cursor::Cursor,
 };
 
@@ -20,6 +24,23 @@ where
         Self {
             products_repository,
         }
+    }
+
+    pub async fn get_products(
+        &self,
+        cursor: Option<String>,
+        size: usize,
+    ) -> Result<ProductCursorPage> {
+        let cursor_str = cursor.unwrap_or_default(); // empty string = first page
+
+        let items = self
+            .products_repository
+            .get_products_cursor(cursor_str, size)
+            .await?;
+
+        let next_cursor = Self::build_next_cursor(&items, size);
+
+        Ok(ProductCursorPage { items, next_cursor })
     }
 
     fn build_next_cursor(items: &[ProductEntity], page_size: usize) -> Option<String> {
