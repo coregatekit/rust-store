@@ -3,8 +3,10 @@ use mockall::automock;
 
 use anyhow::Result;
 
+use crate::domain::entities::products::ProductEntity;
+
 #[automock]
 #[async_trait]
 pub trait ProductsRepository {
-    async fn get_products() -> Result<()>;
+    async fn get_products() -> Result<ProductEntity>;
 }
