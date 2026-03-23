@@ -6,4 +6,4 @@ file = "src/infrastructure/postgres/schema.rs"
 custom_type_derives = ["diesel::query_builder::QueryId", "Clone"]
 
 [migrations_directory]
-dir = "/Users/joekim/workspace/github/rust-store/migrations"
+dir = "src/infrastructure/postgres/migrations"
