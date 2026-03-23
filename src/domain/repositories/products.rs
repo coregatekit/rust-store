@@ -8,5 +8,5 @@ use crate::domain::entities::products::ProductEntity;
 #[automock]
 #[async_trait]
 pub trait ProductsRepository {
-    async fn get_products() -> Result<ProductEntity>;
+    async fn get_products_cursor(&self, cursor: String, size: usize) -> Result<Vec<ProductEntity>>;
 }

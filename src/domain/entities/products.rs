@@ -14,3 +14,9 @@ pub struct ProductEntity {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
+
+#[derive(Debug, Clone)]
+pub struct ProductCursorPage {
+    pub items: Vec<ProductEntity>,
+    pub next_cursor: Option<String>,
+}
