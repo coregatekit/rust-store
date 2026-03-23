@@ -9,7 +9,7 @@ diesel::table! {
         #[max_length = 255]
         image_url -> Nullable<Varchar>,
         price -> Numeric,
-        created_at -> Nullable<Timestamp>,
-        updated_at -> Nullable<Timestamp>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
