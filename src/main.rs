@@ -15,7 +15,7 @@ async fn main() {
         } 
     };
 
-    info!("Environment variables loaded successfully: {:?}", dotenvy_env);
+    info!("Environment variables loaded successfully:"); 
 
     let postgres_pool = match establish_connection(&dotenvy_env.database.url) {
         Ok(pool) => pool,
