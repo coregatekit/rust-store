@@ -1,10 +1,11 @@
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use serde::Serialize;
 
 use crate::infrastructure::postgres::schema::products;
 
-#[derive(Debug, Clone, Identifiable, Selectable, Queryable)]
+#[derive(Debug, Clone, Identifiable, Selectable, Queryable, Serialize)]
 #[diesel(table_name = products)]
 pub struct ProductEntity {
     pub id: i32,
@@ -16,7 +17,7 @@ pub struct ProductEntity {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ProductCursorPage {
     pub items: Vec<ProductEntity>,
     pub next_cursor: Option<String>,
