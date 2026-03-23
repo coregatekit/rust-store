@@ -1,3 +1,4 @@
+use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
@@ -10,7 +11,7 @@ pub struct ProductEntity {
     pub name: String,
     pub description: Option<String>,
     pub image_url: Option<String>,
-    pub price: f64,
+    pub price: BigDecimal,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
