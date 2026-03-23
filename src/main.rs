@@ -27,5 +27,5 @@ async fn main() {
 
     info!("Database connection established successfully");
 
-    start(Arc::new(dotenvy_env)).await.expect("Failed to start server");
+    start(Arc::new(dotenvy_env), Arc::new(postgres_pool)).await.expect("Failed to start server");
 }

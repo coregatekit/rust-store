@@ -17,10 +17,12 @@ use tracing::info;
 
 use crate::{
     config::{config_loader::get_stage, config_model::DotEnvyConfig, stage::Stage},
-    infrastructure::axum_http::default_routers,
+    infrastructure::{axum_http::default_routers, postgres::connection::PgPoolSquad},
 };
 
-pub async fn start(config: Arc<DotEnvyConfig>) -> Result<()> {
+pub async fn start(config: Arc<DotEnvyConfig>, db_pool: Arc<PgPoolSquad>) -> Result<()> {
+    _ = db_pool;
+
     let cors_layer = match get_stage() {
         Stage::Local | Stage::Development => CorsLayer::new().allow_origin(Any),
         Stage::Production => {
@@ -53,16 +55,13 @@ pub async fn start(config: Arc<DotEnvyConfig>) -> Result<()> {
         .layer(RequestBodyLimitLayer::new(
             (config.server.body_limit * 1024 * 1024).try_into()?,
         ))
-        .layer(
-            cors_layer
-                .allow_methods([
-                    Method::GET,
-                    Method::POST,
-                    Method::PUT,
-                    Method::PATCH,
-                    Method::DELETE,
-                ]),
-        )
+        .layer(cors_layer.allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::PATCH,
+            Method::DELETE,
+        ]))
         .layer(TraceLayer::new_for_http());
 
     let addr = SocketAddr::from(([0, 0, 0, 0], config.server.port));
