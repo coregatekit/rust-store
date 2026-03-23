@@ -17,7 +17,10 @@ use tracing::info;
 
 use crate::{
     config::{config_loader::get_stage, config_model::DotEnvyConfig, stage::Stage},
-    infrastructure::{axum_http::default_routers, postgres::connection::PgPoolSquad},
+    infrastructure::{
+        axum_http::{default_routers, routers},
+        postgres::connection::PgPoolSquad,
+    },
 };
 
 pub async fn start(config: Arc<DotEnvyConfig>, db_pool: Arc<PgPoolSquad>) -> Result<()> {
@@ -45,8 +48,12 @@ pub async fn start(config: Arc<DotEnvyConfig>, db_pool: Arc<PgPoolSquad>) -> Res
             CorsLayer::new().allow_origin(origins)
         }
     };
+
+    let v1 = Router::new().nest("/products", routers::products::routes(Arc::clone(&db_pool)));
+
     let app = Router::new()
         .fallback(default_routers::not_found)
+        .nest("/api/v1", v1)
         .route("/health-check", get(default_routers::health_check))
         .layer(TimeoutLayer::with_status_code(
             StatusCode::REQUEST_TIMEOUT,
