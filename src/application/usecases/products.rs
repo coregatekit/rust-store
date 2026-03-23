@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use crate::domain::repositories::products::ProductsRepository;
+use crate::{
+    domain::{entities::products::ProductEntity, repositories::products::ProductsRepository},
+    infrastructure::postgres::cursor::Cursor,
+};
 
 pub struct ProductsUseCase<T>
 where
@@ -17,5 +20,19 @@ where
         Self {
             products_repository,
         }
+    }
+
+    fn build_next_cursor(items: &[ProductEntity], page_size: usize) -> Option<String> {
+        if items.len() < page_size {
+            return None;
+        }
+
+        let last = items.last()?;
+        Cursor {
+            id: last.id,
+            created_at: last.created_at,
+        }
+        .encode()
+        .ok()
     }
 }
