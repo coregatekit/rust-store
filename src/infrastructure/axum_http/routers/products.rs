@@ -10,7 +10,7 @@ use axum::{
 
 use crate::{
     application::usecases::products::ProductsUseCase,
-    domain::repositories::products::ProductsRepository,
+    domain::{entities::products::ProductCursorPage, repositories::products::ProductsRepository},
     infrastructure::postgres::{connection::PgPoolSquad, products::ProductPostgres},
 };
 
@@ -24,6 +24,19 @@ pub fn routes(db_pool: Arc<PgPoolSquad>) -> Router {
         .with_state(Arc::new(products_use_case))
 }
 
+// List products with cursor-based pagination
+#[utoipa::path(
+    get,
+    path = "/api/v1/products",
+    params(
+        ("cursor" = String, Query, description = "Cursor for pagination"),
+        ("size" = usize, Query, description = "Number of items to return")
+    ),
+    responses(
+        (status = 200, description = "List of products", body = ProductCursorPage),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_products<T>(
     State(uc): State<Arc<ProductsUseCase<T>>>,
     Query(params): Query<HashMap<String, String>>,

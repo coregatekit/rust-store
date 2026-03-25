@@ -6,6 +6,8 @@ use axum::{
     http::{HeaderValue, Method, StatusCode},
     routing::get,
 };
+use scalar_api_reference::axum::router;
+use serde_json::json;
 use tokio::net::TcpListener;
 use tower_http::{
     cors::{Any, CorsLayer},
@@ -14,6 +16,7 @@ use tower_http::{
     trace::TraceLayer,
 };
 use tracing::info;
+use utoipa::OpenApi;
 
 use crate::{
     config::{config_loader::get_stage, config_model::DotEnvyConfig, stage::Stage},
@@ -23,9 +26,27 @@ use crate::{
     },
 };
 
-pub async fn start(config: Arc<DotEnvyConfig>, db_pool: Arc<PgPoolSquad>) -> Result<()> {
-    _ = db_pool;
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        crate::infrastructure::axum_http::routers::products::list_products
+    ),
+    components(schemas(
+        crate::domain::entities::products::ProductEntity,
+        crate::domain::entities::products::ProductCursorPage
+    )),
+    info(
+        title = "Rust Store API",
+        version = "1.0.0",
+        description = "API for Rust Store application"
+    ),
+    tags(
+        (name = "products", description = "Operations related to products")
+    ),
+)]
+struct ApiDoc;
 
+pub async fn start(config: Arc<DotEnvyConfig>, db_pool: Arc<PgPoolSquad>) -> Result<()> {
     let cors_layer = match get_stage() {
         Stage::Local | Stage::Development => CorsLayer::new().allow_origin(Any),
         Stage::Production => {
@@ -49,10 +70,28 @@ pub async fn start(config: Arc<DotEnvyConfig>, db_pool: Arc<PgPoolSquad>) -> Res
         }
     };
 
+    let spec_json = ApiDoc::openapi().to_pretty_json().unwrap();
+    let spec_route = Router::new().route(
+        "/api-docs/openapi.json",
+        get(move || async move {
+            axum::response::Response::builder()
+                .header("Content-Type", "application/json")
+                .body(spec_json.clone())
+                .unwrap()
+        }),
+    );
+
+    let api_reference_configuration = json!({
+        "url": "/api-docs/openapi.json",
+        "name": "Scalar API Reference",
+    });
+
     let v1 = Router::new().nest("/products", routers::products::routes(Arc::clone(&db_pool)));
 
     let app = Router::new()
         .fallback(default_routers::not_found)
+        .merge(spec_route) // serve OpenAPI spec at /api-docs/openapi.json
+        .merge(router("/scalar", &api_reference_configuration)) // serve Scalar API Reference UI at /scalar
         .nest("/api/v1", v1)
         .route("/health-check", get(default_routers::health_check))
         .layer(TimeoutLayer::with_status_code(
